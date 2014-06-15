@@ -1,0 +1,98 @@
+Reproducible Research
+===================================================
+Peer Assessment 1
+
+Corneliu Dicusar
+
+1) Loading and preprocessing the data
+
+```{r echo = TRUE}
+setwd("E:/R/Reproductible research/Project 1/repdata_data_activity")
+mydata <- read.csv("activity.csv", header = TRUE, sep=",", stringsAsFactors = FALSE)
+
+summary(mydata)
+```
+
+2) What is mean total number of steps taken per day?
+
+```{r echo = TRUE, message=FALSE}
+library(ggplot2)
+
+aggregatestep <- aggregate(. ~ date, data=mydata, FUN=sum)
+
+qplot(x=date, y = steps, data=aggregatestep, geom = "histogram") + theme(axis.text.x=theme_text(angle=90, hjust=1))
+```
+
+The mean of all steps taken per day is equal to: 
+```{r echo = TRUE}
+mean(aggregatestep$steps)
+```
+
+The median of all steps taken per day is equal to: 
+```{r echo = TRUE}
+median(aggregatestep$steps)
+```
+
+3) What is the average daily activity pattern?
+
+```{r echo = TRUE, message=FALSE} 
+aggregateinterval<- aggregate(mydata$steps, list(interval = mydata$interval), mean, na.rm=TRUE)
+
+plot(aggregateinterval$interval,aggregateinterval$x, type = "l", xlab = "Interval", ylab = "Average accross all days")
+```
+
+The interval with the maximum number of steps is: 
+
+```{r echo=TRUE}
+aggregateinterval[which.max(aggregateinterval$x),"interval"]
+```
+4) Imputing missing values
+
+The total number of rows with NAs in the is:
+
+``` {r echo=TRUE}
+ok <- complete.cases(mydata)
+sum(!ok)
+```
+
+We will replace all the NAs in the Steps column with the average for that day (calculated in a separate datable). For the days that don't have any steps recorded the NAs will be replaced with 0
+
+The code:
+```{r echo = TRUE}
+        aggregatestep <- aggregate(. ~ date, data=mydata, FUN=mean)
+        
+        noNA<-mydata
+
+        for (i in 1: nrow(noNA)){
+                if(is.na(noNA[i,"steps"]))  
+                {
+                        if(is.na(match(noNA[i,"date"],aggregatestep$date)))
+                                {noNA[i,"steps"]<- 0}
+                        else{
+                                noNA[i,"steps"]<-  aggregatestep[match(noNA[i,"date"],aggregatestep$date),"steps"]
+                         }
+                }                       
+
+        }
+summary(noNA)
+```
+
+The plot for this new dataset is:
+
+
+```{r echo = TRUE, message=FALSE}
+aggregatestep2 <- aggregate(. ~ date, data=noNA, FUN=sum)
+
+qplot(x=date, y = steps, data=aggregatestep2, geom = "histogram") + theme(axis.text.x=theme_text(angle=90, hjust=1))
+```
+
+The new mean of all steps taken per day is equal to: 
+```{r echo = TRUE}
+mean(aggregatestep2$steps)
+```
+
+The new median of all steps taken per day is equal to: 
+```{r echo = TRUE}
+median(aggregatestep2$steps)
+```
+It can be seen that the mean and the median are different now, and also there are more points in the histogram.
